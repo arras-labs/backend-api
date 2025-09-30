@@ -10,10 +10,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Node? only if a lock file exists
       - name: Detect Node lockfile
         id: node
-        shell: bash
         run: |
           if [[ -f package-lock.json || -f npm-shrinkwrap.json || -f yarn.lock ]]; then
             echo "has_node=true" >> "$GITHUB_OUTPUT"
@@ -21,34 +19,15 @@ jobs:
             echo "has_node=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Setup Node
+      - uses: actions/setup-node@v4
         if: steps.node.outputs.has_node == 'true'
-        uses: actions/setup-node@v4
         with: { node-version: 'lts/*', cache: 'npm' }
 
-      - name: Install (npm ci)
+      - run: npm ci
         if: steps.node.outputs.has_node == 'true'
-        run: npm ci
 
-      - name: Lint (npm)
+      - run: npm run lint --if-present
         if: steps.node.outputs.has_node == 'true'
-        run: npm run lint --if-present
 
-      - name: Test (npm)
+      - run: npm test --if-present -- --ci
         if: steps.node.outputs.has_node == 'true'
-        run: npm test --if-present -- --ci
-
-      # Optional: container build/push only on push if Dockerfile exists
-      - name: Build Docker image
-        if: github.event_name == 'push' && steps.node.outputs.has_node == 'true' && hashFiles('Dockerfile') != ''
-        run: |
-          docker build -t ghcr.io/${{ github.repository }}:${{ github.sha }} .
-      - name: Login GHCR & push
-        if: github.event_name == 'push' && steps.node.outputs.has_node == 'true' && hashFiles('Dockerfile') != ''
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - if: github.event_name == 'push' && steps.node.outputs.has_node == 'true' && hashFiles('Dockerfile') != ''
-        run: docker push ghcr.io/${{ github.repository }}:${{ github.sha }}
