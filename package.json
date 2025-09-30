@@ -1,0 +1,13 @@
+{
+  "name": "backend-api",
+  "version": "1.0.0",
+  "description": "This repository provides a minimal, pragmatic template: - British English across docs and messages - GitHub Actions CI - CODEOWNERS, PR/Issue templates - Dependabot",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo 'No tests yet'; exit 0",
+    "lint": "echo 'No linter yet'; exit 0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

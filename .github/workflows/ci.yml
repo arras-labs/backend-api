@@ -4,14 +4,13 @@ on:
     branches: [ main ]
   push:
     branches: [ main ]
-
 jobs:
   CI:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      # --- Detect Node lockfile ---
+      # Node? only if a lock file exists
       - name: Detect Node lockfile
         id: node
         shell: bash
@@ -22,13 +21,10 @@ jobs:
             echo "has_node=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # --- Run Node steps only if a lockfile exists ---
       - name: Setup Node
         if: steps.node.outputs.has_node == 'true'
         uses: actions/setup-node@v4
-        with:
-          node-version: 'lts/*'
-          cache: 'npm'
+        with: { node-version: 'lts/*', cache: 'npm' }
 
       - name: Install (npm ci)
         if: steps.node.outputs.has_node == 'true'
@@ -42,28 +38,17 @@ jobs:
         if: steps.node.outputs.has_node == 'true'
         run: npm test --if-present -- --ci
 
-      # --- Detect Python requirements ---
-      - name: Detect Python requirements
-        id: py
-        shell: bash
+      # Optional: container build/push only on push if Dockerfile exists
+      - name: Build Docker image
+        if: github.event_name == 'push' && steps.node.outputs.has_node == 'true' && hashFiles('Dockerfile') != ''
         run: |
-          if ls requirements*.txt >/dev/null 2>&1; then
-            echo "has_py=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_py=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      # --- Run Python steps only if requirements exist ---
-      - name: Setup Python
-        if: steps.py.outputs.has_py == 'true'
-        uses: actions/setup-python@v5
+          docker build -t ghcr.io/${{ github.repository }}:${{ github.sha }} .
+      - name: Login GHCR & push
+        if: github.event_name == 'push' && steps.node.outputs.has_node == 'true' && hashFiles('Dockerfile') != ''
+        uses: docker/login-action@v3
         with:
-          python-version: '3.12'
-
-      - name: Install (pip)
-        if: steps.py.outputs.has_py == 'true'
-        run: pip install -r requirements.txt
-
-      - name: Test (pytest)
-        if: steps.py.outputs.has_py == 'true'
-        run: pytest -q
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - if: github.event_name == 'push' && steps.node.outputs.has_node == 'true' && hashFiles('Dockerfile') != ''
+        run: docker push ghcr.io/${{ github.repository }}:${{ github.sha }}
