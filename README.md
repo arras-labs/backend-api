@@ -1,10 +1,29 @@
-# Project Template
+# Backend API
 
-This repository provides a minimal, pragmatic template:
-- British English across docs and messages
-- GitHub Actions CI
-- CODEOWNERS, PR/Issue templates
-- Dependabot
+## Overview
+Application backend exposing APIs for the web client and services. Containerised for local and remote deployments.
 
-## Getting started
-Clone, create your feature branch, and raise a pull request.
+## Scope
+- Expose business APIs
+- Integrate with blockchain, messaging, and data stores
+- Enforce domain and security rules
+
+## Tech stack
+TBD (e.g., Node.js, NestJS, PostgreSQL)
+
+## Endpoints
+Documented via OpenAPI once implemented.
+
+## Local development
+- Install dependencies: `npm ci`
+- Start dev server: see `package.json` scripts
+- Environment variables: `.env` (do not commit secrets)
+
+## Testing
+`npm test` (unit). Add integration tests as features are added.
+
+## CI
+Runs lint, tests, and builds a Docker image on push and PR.
+
+## Deployment
+Images are built by CI. The `deploy` repo orchestrates environments.
